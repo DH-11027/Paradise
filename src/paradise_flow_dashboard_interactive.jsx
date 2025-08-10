@@ -1,13 +1,13 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
 import { LineChart as LineChartIcon } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 // Utilities
-import { DEFAULT_SELECTED_CATEGORIES, DEFAULT_UNIT_SCALE } from "./constants/sampleData";
 import { useDataProcessing } from "./hooks/useDataProcessing";
 import { useSelfTest } from "./hooks/useSelfTest";
+import { useDashboardState } from "./hooks/useDashboardState";
 
 // Components
 import PeriodSelector from "./components/controls/PeriodSelector";
@@ -15,24 +15,29 @@ import DataLoader from "./components/controls/DataLoader";
 import FlowDisplayOptions from "./components/controls/FlowDisplayOptions";
 import CSVInputs from "./components/controls/CSVInputs";
 // Charts
-import AdvancedPriceChart from "./components/charts/AdvancedPriceChart";
-import EnhancedInvestorFlowChart from "./components/charts/EnhancedInvestorFlowChart";
-import EnhancedIndicatorsChart from "./components/charts/EnhancedIndicatorsChart";
-import EnhancedOBVFlowChart from "./components/charts/EnhancedOBVFlowChart";
-import VolumeProfileChart from "./components/charts/VolumeProfileChart";
+const AdvancedPriceChart = React.lazy(() => import(/* webpackChunkName: "AdvancedPriceChart" */ "./components/charts/AdvancedPriceChart"));
+const EnhancedInvestorFlowChart = React.lazy(() => import(/* webpackChunkName: "EnhancedInvestorFlowChart" */ "./components/charts/EnhancedInvestorFlowChart"));
+const EnhancedIndicatorsChart = React.lazy(() => import(/* webpackChunkName: "EnhancedIndicatorsChart" */ "./components/charts/EnhancedIndicatorsChart"));
+const EnhancedOBVFlowChart = React.lazy(() => import(/* webpackChunkName: "EnhancedOBVFlowChart" */ "./components/charts/EnhancedOBVFlowChart"));
+const VolumeProfileChart = React.lazy(() => import(/* webpackChunkName: "VolumeProfileChart" */ "./components/charts/VolumeProfileChart"));
+
+const ChartFallback = <div className="p-4 text-center text-slate-500">Loading chart...</div>;
 import SelfTest from "./components/SelfTest";
 import InstitutionalDashboard from "./components/InstitutionalDashboard";
 import TradingSignalPanel from "./components/TradingSignalPanel";
 
 export default function ParadiseFlowDashboard() {
   // State management
-  const [priceCSV, setPriceCSV] = useState("");
-  const [flowCSV, setFlowCSV] = useState("");
-  const [anchorIndex, setAnchorIndex] = useState(0);
-  const [days, setDays] = useState(60);
-  const [useSample, setUseSample] = useState(false);
-  const [unitScale, setUnitScale] = useState(DEFAULT_UNIT_SCALE);
-  const [selectedCats, setSelectedCats] = useState(DEFAULT_SELECTED_CATEGORIES);
+  const { state, dispatch } = useDashboardState();
+  const {
+    priceCSV,
+    flowCSV,
+    anchorIndex,
+    days,
+    useSample,
+    unitScale,
+    selectedCats,
+  } = state;
 
   // Custom hooks
   const { enriched } = useDataProcessing(priceCSV, flowCSV, useSample, anchorIndex);
@@ -67,15 +72,14 @@ export default function ParadiseFlowDashboard() {
   ), [unitScale]);
 
   // Event handlers
-  const toggleCat = useCallback((k) => {
-    setSelectedCats((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
-  }, []);
-
   const handleChartClick = useCallback((e) => {
     if (e && e.activeTooltipIndex != null) {
-      setAnchorIndex(enriched.indexOf(viewData[e.activeTooltipIndex]));
+      dispatch({
+        type: "SET_ANCHOR_INDEX",
+        payload: enriched.indexOf(viewData[e.activeTooltipIndex]),
+      });
     }
-  }, [enriched, viewData]);
+  }, [dispatch, enriched, viewData]);
 
   return (
     <TooltipProvider>
@@ -96,28 +100,17 @@ export default function ParadiseFlowDashboard() {
 
         {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PeriodSelector days={days} setDays={setDays} />
-          <DataLoader 
-            setUseSample={setUseSample} 
-            setPriceCSV={setPriceCSV} 
-            setFlowCSV={setFlowCSV} 
-            setAnchorIndex={setAnchorIndex} 
-          />
-          <FlowDisplayOptions 
-            unitScale={unitScale} 
-            setUnitScale={setUnitScale} 
-            selectedCats={selectedCats} 
-            toggleCat={toggleCat} 
+          <PeriodSelector days={days} dispatch={dispatch} />
+          <DataLoader dispatch={dispatch} />
+          <FlowDisplayOptions
+            unitScale={unitScale}
+            selectedCats={selectedCats}
+            dispatch={dispatch}
           />
         </div>
 
           {/* CSV inputs */}
-          <CSVInputs 
-            priceCSV={priceCSV} 
-            setPriceCSV={setPriceCSV} 
-            flowCSV={flowCSV} 
-            setFlowCSV={setFlowCSV} 
-          />
+          <CSVInputs priceCSV={priceCSV} flowCSV={flowCSV} dispatch={dispatch} />
 
           {/* Trading Signal Panel - 최우선 표시 */}
           <TradingSignalPanel data={viewData} />
@@ -126,19 +119,29 @@ export default function ParadiseFlowDashboard() {
           <InstitutionalDashboard data={viewData} unitScale={unitScale} />
 
           {/* Main Charts */}
-          <AdvancedPriceChart data={viewData} onChartClick={handleChartClick} />
-          
+          <Suspense fallback={ChartFallback}>
+            <AdvancedPriceChart data={viewData} onChartClick={handleChartClick} />
+          </Suspense>
+
           {/* Volume Analysis */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <VolumeProfileChart data={viewData} />
-            <EnhancedOBVFlowChart data={viewData} unitScale={unitScale} />
+            <Suspense fallback={ChartFallback}>
+              <VolumeProfileChart data={viewData} />
+            </Suspense>
+            <Suspense fallback={ChartFallback}>
+              <EnhancedOBVFlowChart data={viewData} unitScale={unitScale} />
+            </Suspense>
           </div>
 
           {/* Investor Flow */}
-          <EnhancedInvestorFlowChart data={viewData} selectedCats={selectedCats} unitScale={unitScale} unitName={unitName} />
+          <Suspense fallback={ChartFallback}>
+            <EnhancedInvestorFlowChart data={viewData} selectedCats={selectedCats} unitScale={unitScale} unitName={unitName} />
+          </Suspense>
 
           {/* Technical Indicators */}
-          <EnhancedIndicatorsChart data={viewData} />
+          <Suspense fallback={ChartFallback}>
+            <EnhancedIndicatorsChart data={viewData} />
+          </Suspense>
 
         {/* Self Test */}
         <SelfTest testLog={testLog} runSelfTests={runSelfTests} />

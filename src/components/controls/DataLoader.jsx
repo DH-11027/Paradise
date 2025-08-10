@@ -3,20 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { RefreshCw, Database } from "lucide-react";
 
-export default function DataLoader({ setUseSample, setPriceCSV, setFlowCSV, setAnchorIndex }) {
+export default function DataLoader({ dispatch }) {
   const loadLocalData = async () => {
     try {
       // 가격 데이터 로드
       const priceResponse = await fetch('/price_data.csv');
       const priceText = await priceResponse.text();
-      setPriceCSV(priceText);
-      
+      dispatch({ type: "SET_PRICE_CSV", payload: priceText });
+
       // 수급 데이터 로드 (금액 단위)
       const flowResponse = await fetch('/flows_data.csv');
       const flowText = await flowResponse.text();
-      setFlowCSV(flowText);
-      
-      setAnchorIndex(0);
+      dispatch({ type: "SET_FLOW_CSV", payload: flowText });
+
+      dispatch({ type: "SET_ANCHOR_INDEX", payload: 0 });
     } catch (error) {
       console.error('데이터 로드 실패:', error);
       alert('데이터 로드에 실패했습니다. CSV 파일을 직접 업로드해주세요.');
@@ -28,14 +28,14 @@ export default function DataLoader({ setUseSample, setPriceCSV, setFlowCSV, setA
       // 가격 데이터 로드
       const priceResponse = await fetch('/price_data.csv');
       const priceText = await priceResponse.text();
-      setPriceCSV(priceText);
-      
+      dispatch({ type: "SET_PRICE_CSV", payload: priceText });
+
       // 수급 데이터 로드 (주식수 단위)
       const flowResponse = await fetch('/flows_volume.csv');
       const flowText = await flowResponse.text();
-      setFlowCSV(flowText);
-      
-      setAnchorIndex(0);
+      dispatch({ type: "SET_FLOW_CSV", payload: flowText });
+
+      dispatch({ type: "SET_ANCHOR_INDEX", payload: 0 });
       console.log('주식수 단위 데이터 로드 완료');
     } catch (error) {
       console.error('데이터 로드 실패:', error);
@@ -56,7 +56,7 @@ export default function DataLoader({ setUseSample, setPriceCSV, setFlowCSV, setA
           <Button variant="outline" onClick={loadVolumeData}>
             <Database className="w-4 h-4 mr-2"/>주식수 단위 로드
           </Button>
-          <Button variant="ghost" onClick={() => { setAnchorIndex(0); }}>
+          <Button variant="ghost" onClick={() => dispatch({ type: "SET_ANCHOR_INDEX", payload: 0 })}>
             <RefreshCw className="w-4 h-4 mr-2"/>VWAP 앵커 초기화
           </Button>
         </div>
