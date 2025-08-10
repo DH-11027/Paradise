@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useState, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
 import { LineChart as LineChartIcon } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -15,11 +15,13 @@ import DataLoader from "./components/controls/DataLoader";
 import FlowDisplayOptions from "./components/controls/FlowDisplayOptions";
 import CSVInputs from "./components/controls/CSVInputs";
 // Charts
-import AdvancedPriceChart from "./components/charts/AdvancedPriceChart";
-import EnhancedInvestorFlowChart from "./components/charts/EnhancedInvestorFlowChart";
-import EnhancedIndicatorsChart from "./components/charts/EnhancedIndicatorsChart";
-import EnhancedOBVFlowChart from "./components/charts/EnhancedOBVFlowChart";
-import VolumeProfileChart from "./components/charts/VolumeProfileChart";
+const AdvancedPriceChart = React.lazy(() => import(/* webpackChunkName: "AdvancedPriceChart" */ "./components/charts/AdvancedPriceChart"));
+const EnhancedInvestorFlowChart = React.lazy(() => import(/* webpackChunkName: "EnhancedInvestorFlowChart" */ "./components/charts/EnhancedInvestorFlowChart"));
+const EnhancedIndicatorsChart = React.lazy(() => import(/* webpackChunkName: "EnhancedIndicatorsChart" */ "./components/charts/EnhancedIndicatorsChart"));
+const EnhancedOBVFlowChart = React.lazy(() => import(/* webpackChunkName: "EnhancedOBVFlowChart" */ "./components/charts/EnhancedOBVFlowChart"));
+const VolumeProfileChart = React.lazy(() => import(/* webpackChunkName: "VolumeProfileChart" */ "./components/charts/VolumeProfileChart"));
+
+const ChartFallback = <div className="p-4 text-center text-slate-500">Loading chart...</div>;
 import SelfTest from "./components/SelfTest";
 import InstitutionalDashboard from "./components/InstitutionalDashboard";
 import TradingSignalPanel from "./components/TradingSignalPanel";
@@ -117,19 +119,29 @@ export default function ParadiseFlowDashboard() {
           <InstitutionalDashboard data={viewData} unitScale={unitScale} />
 
           {/* Main Charts */}
-          <AdvancedPriceChart data={viewData} onChartClick={handleChartClick} />
-          
+          <Suspense fallback={ChartFallback}>
+            <AdvancedPriceChart data={viewData} onChartClick={handleChartClick} />
+          </Suspense>
+
           {/* Volume Analysis */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <VolumeProfileChart data={viewData} />
-            <EnhancedOBVFlowChart data={viewData} unitScale={unitScale} />
+            <Suspense fallback={ChartFallback}>
+              <VolumeProfileChart data={viewData} />
+            </Suspense>
+            <Suspense fallback={ChartFallback}>
+              <EnhancedOBVFlowChart data={viewData} unitScale={unitScale} />
+            </Suspense>
           </div>
 
           {/* Investor Flow */}
-          <EnhancedInvestorFlowChart data={viewData} selectedCats={selectedCats} unitScale={unitScale} unitName={unitName} />
+          <Suspense fallback={ChartFallback}>
+            <EnhancedInvestorFlowChart data={viewData} selectedCats={selectedCats} unitScale={unitScale} unitName={unitName} />
+          </Suspense>
 
           {/* Technical Indicators */}
-          <EnhancedIndicatorsChart data={viewData} />
+          <Suspense fallback={ChartFallback}>
+            <EnhancedIndicatorsChart data={viewData} />
+          </Suspense>
 
         {/* Self Test */}
         <SelfTest testLog={testLog} runSelfTests={runSelfTests} />
