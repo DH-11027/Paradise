@@ -1,4 +1,5 @@
 // 강력한 CSV 파서 - BOM과 한글 처리 최적화
+import logger from '../lib/logger';
 
 export function robustParseCSV(text) {
   if (!text) return [];
@@ -23,7 +24,7 @@ export function robustParseCSV(text) {
   const lines = cleanText.split(/\r?\n/).filter(line => line.trim().length > 0);
   
   if (lines.length < 2) {
-    console.warn('CSV has less than 2 lines');
+    logger.warn('CSV has less than 2 lines');
     return [];
   }
   
@@ -45,7 +46,7 @@ export function robustParseCSV(text) {
     return clean;
   });
   
-  console.log('Parsed headers:', headers);
+  logger.log('Parsed headers:', headers);
   
   // 5. 데이터 행 파싱
   const data = [];
@@ -102,14 +103,14 @@ export function parseInvestorFlowData(text) {
   const rows = robustParseCSV(text);
   
   if (rows.length === 0) {
-    console.warn('No rows parsed from investor flow data');
+    logger.warn('No rows parsed from investor flow data');
     return [];
   }
   
   // 헤더 확인
   const firstRow = rows[0];
   const headers = Object.keys(firstRow);
-  console.log('Investor flow headers:', headers);
+  logger.log('Investor flow headers:', headers);
   
   // 날짜 필드 찾기
   const dateField = headers.find(h => 
@@ -120,7 +121,7 @@ export function parseInvestorFlowData(text) {
   );
   
   if (!dateField) {
-    console.warn('No date field found, using first column');
+    logger.warn('No date field found, using first column');
   }
   
   // 데이터 정규화
@@ -143,7 +144,7 @@ export function parseInvestorFlowData(text) {
     });
     
     if (idx === 0) {
-      console.log('First normalized row:', normalized);
+      logger.log('First normalized row:', normalized);
     }
     
     // 기관합계가 없으면 계산
