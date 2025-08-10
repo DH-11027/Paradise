@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(npm install)",
+      "Bash(mv:*)",
+      "Bash(xcopy:*)",
+      "Bash(cp:*)",
+      "Bash(ls:*)",
+      "Bash(npm start)",
+      "Bash(set PORT=3001)",
+      "Bash($env:PORT=3001)",
+      "Bash(npx kill-port:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(powershell:*)"
+    ],
+    "deny": []
+  }
+}
