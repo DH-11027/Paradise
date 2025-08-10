@@ -5,9 +5,9 @@ import { Button } from "./components/ui/button";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 // Utilities
-import { DEFAULT_SELECTED_CATEGORIES, DEFAULT_UNIT_SCALE } from "./constants/sampleData";
 import { useDataProcessing } from "./hooks/useDataProcessing";
 import { useSelfTest } from "./hooks/useSelfTest";
+import { useDashboardState } from "./hooks/useDashboardState";
 
 // Components
 import PeriodSelector from "./components/controls/PeriodSelector";
@@ -28,13 +28,16 @@ import TradingSignalPanel from "./components/TradingSignalPanel";
 
 export default function ParadiseFlowDashboard() {
   // State management
-  const [priceCSV, setPriceCSV] = useState("");
-  const [flowCSV, setFlowCSV] = useState("");
-  const [anchorIndex, setAnchorIndex] = useState(0);
-  const [days, setDays] = useState(60);
-  const [useSample, setUseSample] = useState(false);
-  const [unitScale, setUnitScale] = useState(DEFAULT_UNIT_SCALE);
-  const [selectedCats, setSelectedCats] = useState(DEFAULT_SELECTED_CATEGORIES);
+  const { state, dispatch } = useDashboardState();
+  const {
+    priceCSV,
+    flowCSV,
+    anchorIndex,
+    days,
+    useSample,
+    unitScale,
+    selectedCats,
+  } = state;
 
   // Custom hooks
   const { enriched } = useDataProcessing(priceCSV, flowCSV, useSample, anchorIndex);
@@ -69,15 +72,14 @@ export default function ParadiseFlowDashboard() {
   ), [unitScale]);
 
   // Event handlers
-  const toggleCat = useCallback((k) => {
-    setSelectedCats((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
-  }, []);
-
   const handleChartClick = useCallback((e) => {
     if (e && e.activeTooltipIndex != null) {
-      setAnchorIndex(enriched.indexOf(viewData[e.activeTooltipIndex]));
+      dispatch({
+        type: "SET_ANCHOR_INDEX",
+        payload: enriched.indexOf(viewData[e.activeTooltipIndex]),
+      });
     }
-  }, [enriched, viewData]);
+  }, [dispatch, enriched, viewData]);
 
   return (
     <TooltipProvider>
@@ -98,28 +100,17 @@ export default function ParadiseFlowDashboard() {
 
         {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PeriodSelector days={days} setDays={setDays} />
-          <DataLoader 
-            setUseSample={setUseSample} 
-            setPriceCSV={setPriceCSV} 
-            setFlowCSV={setFlowCSV} 
-            setAnchorIndex={setAnchorIndex} 
-          />
-          <FlowDisplayOptions 
-            unitScale={unitScale} 
-            setUnitScale={setUnitScale} 
-            selectedCats={selectedCats} 
-            toggleCat={toggleCat} 
+          <PeriodSelector days={days} dispatch={dispatch} />
+          <DataLoader dispatch={dispatch} />
+          <FlowDisplayOptions
+            unitScale={unitScale}
+            selectedCats={selectedCats}
+            dispatch={dispatch}
           />
         </div>
 
           {/* CSV inputs */}
-          <CSVInputs 
-            priceCSV={priceCSV} 
-            setPriceCSV={setPriceCSV} 
-            flowCSV={flowCSV} 
-            setFlowCSV={setFlowCSV} 
-          />
+          <CSVInputs priceCSV={priceCSV} flowCSV={flowCSV} dispatch={dispatch} />
 
           {/* Trading Signal Panel - 최우선 표시 */}
           <TradingSignalPanel data={viewData} />

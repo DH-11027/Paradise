@@ -3,28 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Upload, FileText, X } from "lucide-react";
 import { Button } from "../ui/button";
 
-export default function CSVInputs({ priceCSV, setPriceCSV, flowCSV, setFlowCSV }) {
+export default function CSVInputs({ priceCSV, flowCSV, dispatch }) {
   const [priceFileName, setPriceFileName] = useState("");
   const [flowFileName, setFlowFileName] = useState("");
-  
-  const handleFileUpload = (file, setter, fileNameSetter) => {
+
+  const handleFileUpload = (file, actionType, fileNameSetter) => {
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      setter(e.target.result);
+      dispatch({ type: actionType, payload: e.target.result });
       fileNameSetter(file.name);
     };
     reader.readAsText(file);
   };
-  
+
   const clearPriceData = () => {
-    setPriceCSV("");
+    dispatch({ type: "SET_PRICE_CSV", payload: "" });
     setPriceFileName("");
   };
-  
+
   const clearFlowData = () => {
-    setFlowCSV("");
+    dispatch({ type: "SET_FLOW_CSV", payload: "" });
     setFlowFileName("");
   };
 
@@ -62,7 +62,7 @@ export default function CSVInputs({ priceCSV, setPriceCSV, flowCSV, setFlowCSV }
                   type="file"
                   className="hidden"
                   accept=".csv"
-                  onChange={(e) => handleFileUpload(e.target.files[0], setPriceCSV, setPriceFileName)}
+                  onChange={(e) => handleFileUpload(e.target.files[0], "SET_PRICE_CSV", setPriceFileName)}
                 />
               </label>
             )}
@@ -79,7 +79,7 @@ export default function CSVInputs({ priceCSV, setPriceCSV, flowCSV, setFlowCSV }
 ..."
                 value={priceCSV}
                 onChange={(e) => {
-                  setPriceCSV(e.target.value);
+                  dispatch({ type: "SET_PRICE_CSV", payload: e.target.value });
                   setPriceFileName("");
                 }}
               />
@@ -120,7 +120,7 @@ export default function CSVInputs({ priceCSV, setPriceCSV, flowCSV, setFlowCSV }
                   type="file"
                   className="hidden"
                   accept=".csv"
-                  onChange={(e) => handleFileUpload(e.target.files[0], setFlowCSV, setFlowFileName)}
+                  onChange={(e) => handleFileUpload(e.target.files[0], "SET_FLOW_CSV", setFlowFileName)}
                 />
               </label>
             )}
@@ -136,7 +136,7 @@ export default function CSVInputs({ priceCSV, setPriceCSV, flowCSV, setFlowCSV }
 2025-08-01,1200000000,-300000000..."
                 value={flowCSV}
                 onChange={(e) => {
-                  setFlowCSV(e.target.value);
+                  dispatch({ type: "SET_FLOW_CSV", payload: e.target.value });
                   setFlowFileName("");
                 }}
               />
